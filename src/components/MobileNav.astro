@@ -22,7 +22,7 @@ const path = Astro.url.pathname;
 const initialIndex = path.includes('/quiz/') ? 2 : path.includes('/blog/') ? 3 : path === `/${locale}/` ? 0 : 4;
 ---
 
-<nav class="mobile-nav" aria-label={locale === 'ru' ? 'Мобильная навигация' : 'Navigation mobile'} data-locale={locale}>
+<nav class="mobile-nav" aria-label={locale === 'ru' ? 'Мобильная навигация' : 'Navigation mobile'} data-locale={locale} transition:persist={`mobile-nav-${locale}`}>
   <span class="mobile-nav-indicator" aria-hidden="true">
     <svg class="mobile-nav-cradle" viewBox="0 0 100 72" preserveAspectRatio="none"><path d="M0 72V26c12 0 16-5 19-12C25 3 37 0 50 0s25 3 31 14c3 7 7 12 19 12v46Z" /></svg>
     <span class="mobile-nav-indicator-surface">
@@ -46,13 +46,16 @@ const initialIndex = path.includes('/quiz/') ? 2 : path.includes('/blog/') ? 3 :
 </nav>
 
 <script>
+  import { navigate } from 'astro:transitions/client';
+
   const nav = document.querySelector<HTMLElement>('.mobile-nav');
   const links = Array.from(nav?.querySelectorAll<HTMLAnchorElement>('.mobile-nav-item') ?? []);
   const indicator = nav?.querySelector<HTMLElement>('.mobile-nav-indicator');
-  const surface = nav?.querySelector<HTMLElement>('.mobile-nav-indicator-surface');
   const indicatorIcon = nav?.querySelector<HTMLElement>('.mobile-nav-indicator-icon');
+  const icons = links.map((link) => link.querySelector('svg')?.cloneNode(true)).filter((icon): icon is SVGElement => icon instanceof SVGElement);
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let activeIndex = 0;
+  let iconTimer: number | undefined;
   let navigationTimer: number | undefined;
 
   function indexFromLocation() {
@@ -75,8 +78,19 @@ const initialIndex = path.includes('/quiz/') ? 2 : path.includes('/blog/') ? 3 :
     nav.style.setProperty('--nav-indicator-x', `${link.offsetLeft + (link.offsetWidth - indicator.offsetWidth) / 2}px`);
   }
 
-  function selectItem(index: number, animate = false) {
+  function fitNavToViewport() {
+    if (!nav) return;
+    nav.style.width = `${document.documentElement.clientWidth}px`;
+    positionIndicator();
+  }
+
+  function showIcon(index: number) {
+    icons.forEach((icon, iconIndex) => { icon.dataset.visible = iconIndex === index ? 'true' : 'false'; });
+  }
+
+  function selectItem(index: number, animateIcon = false) {
     if (!nav || !indicatorIcon || !links[index]) return;
+    const changed = index !== activeIndex;
     activeIndex = index;
     links.forEach((link, itemIndex) => {
       const selected = itemIndex === index;
@@ -84,34 +98,40 @@ const initialIndex = path.includes('/quiz/') ? 2 : path.includes('/blog/') ? 3 :
       if (selected) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     });
-    const icon = links[index].querySelector('svg')?.cloneNode(true);
-    indicatorIcon.replaceChildren(...(icon ? [icon] : []));
+    if (changed) {
+      if (iconTimer) window.clearTimeout(iconTimer);
+      if (animateIcon && !reducedMotion.matches) {
+        iconTimer = window.setTimeout(() => { iconTimer = undefined; showIcon(index); }, 260);
+      } else showIcon(index);
+    } else if (!iconTimer) showIcon(index);
     positionIndicator();
-    if (animate && !reducedMotion.matches && surface) {
-      surface.classList.remove('is-hopping');
-      void surface.offsetWidth;
-      surface.classList.add('is-hopping');
-    }
   }
 
-  if (nav && indicator) {
+  if (nav && indicator && indicatorIcon) {
+    indicatorIcon.replaceChildren(...icons);
+    fitNavToViewport();
     selectItem(indexFromLocation());
     nav.dataset.ready = 'true';
     window.requestAnimationFrame(() => window.requestAnimationFrame(() => { nav.dataset.animated = 'true'; }));
-    window.addEventListener('resize', positionIndicator, { passive: true });
-    window.addEventListener('hashchange', () => selectItem(indexFromLocation()));
+    window.addEventListener('resize', fitNavToViewport, { passive: true });
+    window.addEventListener('hashchange', () => selectItem(indexFromLocation(), true));
+    document.addEventListener('astro:after-swap', () => { fitNavToViewport(); selectItem(indexFromLocation(), true); });
     nav.addEventListener('click', (event) => {
       if (!(event instanceof MouseEvent) || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       if (!(event.target instanceof Element)) return;
       const link = event.target.closest<HTMLAnchorElement>('.mobile-nav-item');
       if (!link || link.target || link.origin !== window.location.origin) return;
       const index = Number(link.dataset.navIndex);
-      const previousIndex = activeIndex;
-      event.preventDefault();
+      const moved = index !== activeIndex;
       if (navigationTimer) window.clearTimeout(navigationTimer);
-      selectItem(index, index !== previousIndex);
-      if (link.href === window.location.href) return;
-      navigationTimer = window.setTimeout(() => window.location.assign(link.href), reducedMotion.matches || index === previousIndex ? 0 : 400);
+      selectItem(index, true);
+      if (link.href === window.location.href) { event.preventDefault(); return; }
+      if (link.pathname === window.location.pathname) return;
+      event.preventDefault();
+      navigationTimer = window.setTimeout(() => {
+        navigationTimer = undefined;
+        void navigate(link.href);
+      }, moved && !reducedMotion.matches ? 440 : 0);
     });
   }
 </script>

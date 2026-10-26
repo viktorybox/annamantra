@@ -1,6 +1,7 @@
 ---
 import Header from '@/components/Header.astro';
 import MobileNav from '@/components/MobileNav.astro';
+import { ClientRouter } from 'astro:transitions';
 import { getCopy, type Locale } from '@/data/site';
 import '@/styles/global.css';
 
@@ -28,7 +29,7 @@ const alternatePath = alternateHref === undefined
 ---
 
 <!doctype html>
-<html lang={locale}>
+<html lang={locale} transition:animate="none">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -37,6 +38,7 @@ const alternatePath = alternateHref === undefined
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     {alternatePath && <link rel="alternate" hreflang={alternateLocale} href={alternatePath} />}
     <title>{pageTitle}</title>
+    <ClientRouter fallback="swap" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">{locale === 'ru' ? 'К содержанию' : 'Aller au contenu'}</a>
