@@ -1,0 +1,44 @@
+name: Site checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [sanity-published]
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    env:
+      PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL }}
+      PUBLIC_SANITY_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
+      PUBLIC_SANITY_DATASET: ${{ vars.PUBLIC_SANITY_DATASET || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - run: npm run check:site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+  studio:
+    runs-on: ubuntu-latest
+    env:
+      SANITY_STUDIO_PROJECT_ID: ${{ vars.PUBLIC_SANITY_PROJECT_ID }}
+      SANITY_STUDIO_DATASET: ${{ vars.PUBLIC_SANITY_DATASET || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+      - run: npm ci --prefix studio
+      - run: npm run check --prefix studio
+      - if: env.SANITY_STUDIO_PROJECT_ID != ''
+        run: npm run build --prefix studio

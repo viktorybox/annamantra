@@ -8,14 +8,16 @@ const otherLocale = locale === 'ru' ? 'fr' : 'ru';
 const alternatePathMap: Record<string, string> = {
   '/ru/privacy/': '/fr/confidentialite/',
   '/fr/confidentialite/': '/ru/privacy/',
+  '/ru/legal/': '/fr/mentions-legales/',
+  '/fr/mentions-legales/': '/ru/legal/',
 };
 const otherPath = languageSwitchHref ?? alternatePathMap[Astro.url.pathname] ?? Astro.url.pathname.replace(`/${locale}/`, `/${otherLocale}/`);
 const isHome = Astro.url.pathname === `/${locale}/`;
 ---
 
-<header class="site-header">
+<header class="site-header" id="home">
   <div class="header-shell">
-    <a class="brand-slot" href={`/${locale}/`} aria-label={locale === 'ru' ? 'На главную' : 'Accueil'}>
+    <a class="brand-slot" href={`/${locale}/#home`} aria-label={locale === 'ru' ? 'На главную' : 'Accueil'}>
       <picture>
         <source srcset="/images/logo.webp" type="image/webp" />
         <img src="/images/logo.png" alt="Anna Mantra" width="56" height="56" />

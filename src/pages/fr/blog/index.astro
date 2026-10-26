@@ -1,19 +1,4 @@
 ---
-import BaseLayout from '@/layouts/BaseLayout.astro';
-import { getCopy } from '@/data/site';
-const text = getCopy('fr');
+import BlogIndex from '@/components/BlogIndex.astro';
 ---
-
-<BaseLayout locale="fr" title="Blog — Anna Mantra">
-  <section class="inner-page section-grid">
-    <div>
-      <p class="eyebrow">{text.blogEyebrow}</p>
-      <h1>{text.blogTitle}</h1>
-    </div>
-    <div class="empty-state">
-      <span class="empty-state-mark">AM</span>
-      <p>{text.blogBody}</p>
-      <a class="button button-outline" href="/fr/">Retour à l’accueil <span aria-hidden="true">↗</span></a>
-    </div>
-  </section>
-</BaseLayout>
+<BlogIndex locale="fr" />

@@ -1,9 +1,11 @@
 ---
 import { getQuizData, type QuizLocale } from '@/data/quiz';
+import { getConnections } from '@/data/connections';
 
 interface Props { locale: QuizLocale }
 const { locale } = Astro.props;
 const data = getQuizData(locale);
+const connections = await getConnections();
 const serialized = JSON.stringify(data).replace(/</g, '\\u003c');
 ---
 
@@ -34,7 +36,7 @@ const serialized = JSON.stringify(data).replace(/</g, '\\u003c');
   <dialog class="result-dialog" data-result-dialog aria-labelledby="result-title">
     <div class="result-dialog-inner">
       <button class="dialog-close" type="button" data-close-result aria-label={locale === 'ru' ? 'Закрыть результат' : 'Fermer le résultat'}>×</button>
-      <div class="result-image-wrap"><img data-result-image src="" alt="" width="600" height="600" /></div>
+      <div class="result-image-wrap"><img data-result-image alt="" width="600" height="600" /></div>
       <div class="result-copy">
         <p class="eyebrow" data-result-eyebrow>{data.copy.resultEyebrow}</p>
         <p class="result-label" data-result-label></p>
@@ -43,7 +45,11 @@ const serialized = JSON.stringify(data).replace(/</g, '\\u003c');
         <div class="result-practice"><span>{locale === 'ru' ? 'Мягкая практика' : 'Pratique douce'}</span><p data-result-practice></p></div>
         <p class="result-disclaimer">{data.copy.disclaimer}</p>
         <div class="result-actions">
-          <a class="button button-primary" href={`/${locale}/#telegram-channel`}>{data.copy.channel}<span aria-hidden="true">→</span></a>
+          {connections.telegramChannel ? (
+            <a class="button button-primary" href={connections.telegramChannel} target="_blank" rel="noopener noreferrer">{data.copy.channel}<span aria-hidden="true">↗</span></a>
+          ) : (
+            <span class="quiz-channel-pending">{locale === 'ru' ? 'Ссылка на бесплатный канал появится здесь позже.' : 'Le lien vers le canal gratuit sera ajouté ici.'}</span>
+          )}
           <button class="button button-ghost" type="button" data-restart>{data.copy.restart}</button>
         </div>
       </div>

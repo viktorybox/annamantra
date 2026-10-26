@@ -1,10 +1,32 @@
 ---
 import { getCopy, type Locale } from '@/data/site';
+import { getHomeContent } from '@/data/home-content';
+import { getFaq } from '@/data/faq';
+import { getConnections, verifiedExternalUrl } from '@/data/connections';
+import { getCmsHome, getCmsSlots, getCmsTestimonials } from '@/data/cms';
 import { getVisibleBlogPosts } from '@/data/blog';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
-const text = getCopy(locale);
+const [editable, connections, slots, testimonials] = await Promise.all([
+  getCmsHome(locale), getConnections(), getCmsSlots(locale), getCmsTestimonials(locale),
+]);
+const originalText = getCopy(locale);
+const text = {
+  ...originalText,
+  heroTitle: editable?.heroTitle || originalText.heroTitle,
+  heroAccent: editable?.heroAccent || originalText.heroAccent,
+  heroBody: editable?.heroBody || originalText.heroBody,
+  aboutTitle: editable?.aboutTitle || originalText.aboutTitle,
+  aboutBody: editable?.aboutBody || originalText.aboutBody,
+  practiceGroupTitle: editable?.practiceGroupTitle || originalText.practiceGroupTitle,
+  practiceGroupBody: editable?.practiceGroupBody || originalText.practiceGroupBody,
+  practiceIndividualTitle: editable?.practiceIndividualTitle || originalText.practiceIndividualTitle,
+  practiceIndividualBody: editable?.practiceIndividualBody || originalText.practiceIndividualBody,
+};
+const heroImage = verifiedExternalUrl(editable?.heroImageUrl) ?? '/images/hero-anna.jpg';
+const home = getHomeContent(locale);
+const questions = getFaq(locale);
 const isRu = locale === 'ru';
 const blogEntries = await getVisibleBlogPosts(locale);
 const featuredPost = blogEntries[0];
@@ -28,9 +50,56 @@ const featuredPost = blogEntries[0];
     <div class="hero-orbit hero-orbit-one"></div>
     <div class="hero-orbit hero-orbit-two"></div>
     <div class="hero-image-wrap">
-      <img src="/images/hero-anna.jpg" alt={isRu ? 'Анна в медитативной позе' : 'Anna dans une posture méditative'} width="720" height="1200" fetchpriority="high" />
+      <img src={heroImage} alt={isRu ? 'Анна в медитативной позе' : 'Anna dans une posture méditative'} width="720" height="1200" fetchpriority="high" />
       <div class="hero-image-caption"><span>AM</span><span>{isRu ? 'практика внутреннего танца' : 'pratique de la danse intérieure'}</span></div>
     </div>
+  </div>
+</section>
+
+<section class="needs-section section-grid" aria-labelledby="needs-title">
+  <div class="section-heading">
+    <p class="eyebrow">{home.needs.eyebrow}</p>
+    <h2 id="needs-title">{home.needs.title}</h2>
+  </div>
+  <div class="needs-grid">
+    {home.needs.items.map((item, index) => (
+      <article class="needs-card">
+        <span class="card-index">{String(index + 1).padStart(2, '0')}</span>
+        <h3>{item.title}</h3>
+        <p>{item.text}</p>
+      </article>
+    ))}
+  </div>
+  <p class="needs-closing">{home.needs.closing}</p>
+</section>
+
+<section class="explain-section section-grid" aria-label={isRu ? 'О практиках Кундалини' : 'À propos des pratiques Kundalini'}>
+  <article class="explain-card" id="activation" aria-labelledby="activation-title">
+    <p class="eyebrow">{home.activation.eyebrow}</p>
+    <h2 id="activation-title">{home.activation.title}</h2>
+    <p class="section-lead">{home.activation.lead}</p>
+    <p>{editable?.activationBody || home.activation.body}</p>
+  </article>
+  <article class="explain-card explain-card-lilac" id="kundalini-yoga" aria-labelledby="yoga-title">
+    <p class="eyebrow">{home.yoga.eyebrow}</p>
+    <h2 id="yoga-title">{home.yoga.title}</h2>
+    <p class="section-lead">{home.yoga.lead}</p>
+    <p>{editable?.yogaBody || home.yoga.body}</p>
+  </article>
+</section>
+
+<section class="about-section section-grid" id="about" aria-labelledby="about-title">
+  <div class="about-photo-wrap">
+    <div class="about-photo-glow"></div>
+    <img src="/images/hero-anna.jpg" alt={isRu ? 'Анна Мантра' : 'Anna Mantra'} loading="lazy" width="720" height="1200" />
+    <div class="about-stamp" aria-hidden="true">{isRu ? 'внутренний' : 'contact'}<br />{isRu ? 'контакт' : 'intérieur'}</div>
+  </div>
+  <div class="about-copy">
+    <p class="eyebrow">{text.aboutEyebrow}</p>
+    <h2 id="about-title">{text.aboutTitle}</h2>
+    <p class="section-lead">{text.aboutBody}</p>
+    {home.aboutMore.map((paragraph) => <p>{paragraph}</p>)}
+    <a class="text-link" href="#support">{text.aboutLink}<span aria-hidden="true">→</span></a>
   </div>
 </section>
 
@@ -48,7 +117,7 @@ const featuredPost = blogEntries[0];
     <div class="card-icon" aria-hidden="true">✦</div>
     <h3>{text.practiceGroupTitle}</h3>
     <p>{text.practiceGroupBody}</p>
-    <a class="card-link" href="#telegram-channel">{text.practiceGroupCta}<span aria-hidden="true">↗</span></a>
+    <a class="card-link" href="#support">{text.practiceGroupCta}<span aria-hidden="true">↗</span></a>
   </article>
   <article class="practice-card practice-card-lilac">
     <span class="card-index">02</span>
@@ -57,20 +126,6 @@ const featuredPost = blogEntries[0];
     <p>{text.practiceIndividualBody}</p>
     <a class="card-link" href="#schedule">{text.practiceIndividualCta}<span aria-hidden="true">↗</span></a>
   </article>
-</section>
-
-<section class="about-section section-grid" id="about" aria-labelledby="about-title">
-  <div class="about-photo-wrap">
-    <div class="about-photo-glow"></div>
-    <img src="/images/hero-anna.jpg" alt={isRu ? 'Анна Мантра' : 'Anna Mantra'} loading="lazy" width="720" height="1200" />
-    <div class="about-stamp" aria-hidden="true">внутренний<br />контакт</div>
-  </div>
-  <div class="about-copy">
-    <p class="eyebrow">{text.aboutEyebrow}</p>
-    <h2 id="about-title">{text.aboutTitle}</h2>
-    <p class="section-lead">{text.aboutBody}</p>
-    <a class="text-link" href="#channel">{text.aboutLink}<span aria-hidden="true">→</span></a>
-  </div>
 </section>
 
 <section class="quiz-promo section-grid" aria-labelledby="quiz-promo-title">
@@ -82,7 +137,7 @@ const featuredPost = blogEntries[0];
     <p class="eyebrow">{text.quizEyebrow}</p>
     <h2 id="quiz-promo-title">{text.quizTitle}</h2>
     <p class="section-lead">{text.quizBody}</p>
-    <a class="button button-outline" href={`/${locale}/quiz/`}>{text.quizCta}<span aria-hidden="true">↗</span></a>
+    <a class="button button-outline" href="/ru/quiz/" hreflang="ru" data-astro-reload={locale !== 'ru' || undefined}>{text.quizCta}<span aria-hidden="true">↗</span></a>
   </div>
 </section>
 
@@ -91,10 +146,34 @@ const featuredPost = blogEntries[0];
     <p class="eyebrow">{text.scheduleEyebrow}</p>
     <h2 id="schedule-title">{text.scheduleTitle}</h2>
   </div>
-  <div class="schedule-placeholder">
+  {slots.length ? <div class="session-list">
+    {slots.map((slot) => <article class="session-card">
+      <h3>{slot.title}</h3>
+      <time datetime={slot.startsAt}>{new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short', timeZone: slot.timeZone }).format(new Date(slot.startsAt))} · {slot.timeZone}</time>
+      {verifiedExternalUrl(slot.registrationUrl) && <a class="button button-primary" href={verifiedExternalUrl(slot.registrationUrl)!} target="_blank" rel="noopener noreferrer">{isRu ? 'Записаться' : 'Réserver'}<span aria-hidden="true">↗</span></a>}
+    </article>)}
+  </div> : <div class="schedule-placeholder">
     <div class="schedule-line"><span class="schedule-dot"></span><span>01</span><span class="schedule-rule"></span><span>{isRu ? 'Расписание появится здесь' : 'L’agenda apparaîtra ici'}</span></div>
     <p>{text.scheduleBody}</p>
-    <a class="text-link" href="#telegram-channel">{text.scheduleCta}<span aria-hidden="true">→</span></a>
+    <a class="text-link" href="#support">{isRu ? 'Условия участия' : 'Modalités de participation'}<span aria-hidden="true">→</span></a>
+  </div>}
+</section>
+
+<section class="reviews-section section-grid" id="reviews" aria-labelledby="reviews-title">
+  <div class="section-heading">
+    <p class="eyebrow">{home.reviews.eyebrow}</p>
+    <h2 id="reviews-title">{home.reviews.title}</h2>
+    <p class="section-lead">{home.reviews.intro}</p>
+  </div>
+  <div class="reviews-grid">
+    {testimonials.length ? testimonials.map((review) => <figure class="testimonial-card">
+      {review.quote && <blockquote><p>{review.quote}</p></blockquote>}
+      {verifiedExternalUrl(review.videoUrl) && <video controls preload="none" poster={verifiedExternalUrl(review.posterUrl) ?? undefined} aria-label={isRu ? `Видеоотзыв: ${review.name}` : `Témoignage vidéo : ${review.name}`}><source src={verifiedExternalUrl(review.videoUrl)!} type="video/mp4" /></video>}
+      <figcaption>{review.name}</figcaption>
+    </figure>) : <>
+    <div class="review-placeholder"><span aria-hidden="true">“</span><p>{home.reviews.written}</p></div>
+    <div class="review-placeholder review-video-placeholder"><span aria-hidden="true">▶</span><p>{home.reviews.video}</p></div>
+    </>}
   </div>
 </section>
 
@@ -121,16 +200,80 @@ const featuredPost = blogEntries[0];
   </div>
 </section>
 
-<section class="channel-section" id="channel" aria-labelledby="channel-title">
-  <div class="channel-inner" id="telegram-channel">
+<section class="faq-section section-grid" id="faq" aria-labelledby="faq-title">
+  <div class="section-heading">
+    <p class="eyebrow">{questions.eyebrow}</p>
+    <h2 id="faq-title">{questions.title}</h2>
+    <p class="section-lead">{questions.intro}</p>
+  </div>
+  <div class="faq-list">
+    {questions.items.map((item) => (
+      <details class="faq-item">
+        <summary>{item.question}<span aria-hidden="true">+</span></summary>
+        <p>{item.answer}</p>
+      </details>
+    ))}
+  </div>
+</section>
+
+<section class="support-section section-grid" id="support" aria-labelledby="support-title">
+  <p class="eyebrow">{home.support.eyebrow}</p>
+  <h2 id="support-title">{home.support.title}</h2>
+  <div class="support-grid">
+    <article class="support-card">
+      <h3>{home.support.groupTitle}</h3>
+      <p>{home.support.groupBody}</p>
+      {connections.groupRegistration ? (
+        <a class="button button-primary" href={connections.groupRegistration} target="_blank" rel="noopener noreferrer">{home.support.groupAction}<span aria-hidden="true">↗</span></a>
+      ) : (
+        <button class="button button-disabled" type="button" disabled>{home.support.groupAction}</button>
+      )}
+      {!connections.groupRegistration && <small>{home.support.unavailable}</small>}
+    </article>
+    <article class="support-card">
+      <h3>{home.support.individualTitle}</h3>
+      <p>{home.support.individualBody}</p>
+      {connections.individualPrice && <p class="support-price">{connections.individualPrice}</p>}
+      {connections.individualRegistration ? (
+        <a class="button button-primary" href={connections.individualRegistration} target="_blank" rel="noopener noreferrer">{home.support.individualAction}<span aria-hidden="true">↗</span></a>
+      ) : (
+        <button class="button button-disabled" type="button" disabled>{home.support.individualAction}</button>
+      )}
+      {!connections.individualRegistration && <small>{home.support.unavailable}</small>}
+    </article>
+  </div>
+  <div class="donate-strip">
+    <span>{isRu ? 'Добровольная поддержка проекта' : 'Soutien volontaire du projet'}</span>
+    {connections.donation ? (
+      <a class="button button-outline" href={connections.donation} target="_blank" rel="noopener noreferrer">{home.support.donateAction}<span aria-hidden="true">↗</span></a>
+    ) : (
+      <span class="donate-pending">{home.support.donateUnavailable}</span>
+    )}
+  </div>
+</section>
+
+<section class="final-section section-grid" aria-labelledby="final-title">
+  <p class="eyebrow">{home.final.eyebrow}</p>
+  <h2 id="final-title">{home.final.title}</h2>
+  <p class="section-lead">{editable?.finalBody || home.final.body}</p>
+  <a class="button button-primary" href="#practices">{home.final.action}<span aria-hidden="true">↑</span></a>
+</section>
+
+<section class="channel-section" id="contacts" aria-labelledby="channel-title">
+  <div class="channel-inner" id="channel">
     <p class="eyebrow">{text.channelEyebrow}</p>
     <h2 id="channel-title">{text.channelTitle}</h2>
-    <p>{text.channelBody}</p>
-    <a class="button button-light" href="#telegram-channel">{text.channelCta}<span aria-hidden="true">→</span></a>
+    <p>{connections.telegramChannel ? text.channelBody : home.contacts.pending}</p>
+    {connections.contactEmail && <p><a href={`mailto:${connections.contactEmail}`}>{connections.contactEmail}</a></p>}
+    {connections.telegramChannel ? (
+      <a class="button button-light" href={connections.telegramChannel} target="_blank" rel="noopener noreferrer">{text.channelCta}<span aria-hidden="true">↗</span></a>
+    ) : (
+      <button class="button button-disabled button-light" type="button" disabled>{text.channelCta}</button>
+    )}
   </div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-brand"><span class="footer-logo-slot"><picture><source srcset="/images/logo.webp" type="image/webp" /><img src="/images/logo.png" alt="Anna Mantra" width="40" height="40" /></picture></span><span>{text.footer}</span></div>
-  <div class="footer-meta"><span>© {new Date().getFullYear()} Anna Mantra</span><a href={`/${locale}/privacy/`}>{text.privacy}</a></div>
+  <div class="footer-meta"><span>© {new Date().getFullYear()} Anna Mantra</span><a href={isRu ? '/ru/privacy/' : '/fr/confidentialite/'}>{text.privacy}</a><a href={isRu ? '/ru/legal/' : '/fr/mentions-legales/'}>{isRu ? 'Юридическая информация' : 'Mentions légales'}</a></div>
 </footer>

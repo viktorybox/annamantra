@@ -3,6 +3,8 @@ import Header from '@/components/Header.astro';
 import MobileNav from '@/components/MobileNav.astro';
 import { ClientRouter } from 'astro:transitions';
 import { getCopy, type Locale } from '@/data/site';
+import { siteUrl } from '@/data/site-url';
+import '@/styles/fonts.css';
 import '@/styles/global.css';
 
 interface Props {
@@ -22,10 +24,15 @@ const alternateLocale = locale === 'ru' ? 'fr' : 'ru';
 const alternatePathMap: Record<string, string> = {
   '/ru/privacy/': '/fr/confidentialite/',
   '/fr/confidentialite/': '/ru/privacy/',
+  '/ru/legal/': '/fr/mentions-legales/',
+  '/fr/mentions-legales/': '/ru/legal/',
 };
 const alternatePath = alternateHref === undefined
   ? (alternatePathMap[Astro.url.pathname] ?? Astro.url.pathname.replace(`/${locale}/`, `/${alternateLocale}/`))
   : alternateHref;
+const canonicalUrl = siteUrl ? new URL(Astro.url.pathname, siteUrl).href : null;
+const alternateUrl = siteUrl && alternatePath ? new URL(alternatePath, siteUrl).href : null;
+const preventIndexing = noindex || !siteUrl;
 ---
 
 <!doctype html>
@@ -35,17 +42,43 @@ const alternatePath = alternateHref === undefined
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content={pageDescription} />
     <meta name="theme-color" content="#0d4779" />
-    {noindex && <meta name="robots" content="noindex, nofollow" />}
-    {alternatePath && <link rel="alternate" hreflang={alternateLocale} href={alternatePath} />}
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    {preventIndexing && <meta name="robots" content="noindex, nofollow" />}
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    {canonicalUrl && <link rel="alternate" hreflang={locale} href={canonicalUrl} />}
+    {alternateUrl && <link rel="alternate" hreflang={alternateLocale} href={alternateUrl} />}
+    <link rel="icon" type="image/webp" href="/images/logo.webp" />
+    <link rel="apple-touch-icon" href="/images/logo.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Anna Mantra" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:locale" content={locale === 'ru' ? 'ru_RU' : 'fr_FR'} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+    {siteUrl && <meta property="og:image" content={`${siteUrl}/images/logo.png`} />}
+    <meta name="twitter:card" content="summary" />
     <title>{pageTitle}</title>
     <ClientRouter fallback="swap" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">{locale === 'ru' ? 'К содержанию' : 'Aller au contenu'}</a>
     <Header locale={locale} languageSwitchHref={languageSwitchHref} />
-    <main id="main-content">
+    <main id="main-content" tabindex="-1">
       <slot />
     </main>
     <MobileNav locale={locale} />
+    <script>
+      import { followInternalLink } from '@/lib/client-navigation';
+      document.addEventListener('click', (event) => {
+        if (event.defaultPrevented || !(event instanceof MouseEvent) || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (!(event.target instanceof Element)) return;
+        const link = event.target.closest<HTMLAnchorElement>('a[href]');
+        if (!link || !link.hash || link.target || link.hasAttribute('download') || link.hasAttribute('data-astro-reload') || link.origin !== window.location.origin || link.closest('.mobile-nav, .mobile-more-dialog')) return;
+        event.preventDefault();
+        void followInternalLink(link).then(() => {
+          if (link.classList.contains('skip-link')) document.getElementById('main-content')?.focus({ preventScroll: true });
+        });
+      }, { capture: true });
+    </script>
   </body>
 </html>

@@ -1,0 +1,27 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getVisibleBlogPosts } from '@/data/blog';
+import { getCopy, type Locale } from '@/data/site';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const text = getCopy(locale);
+const isRu = locale === 'ru';
+const posts = await getVisibleBlogPosts(locale);
+---
+<BaseLayout locale={locale} title={isRu ? 'Блог — Анна Мантра' : 'Blog — Anna Mantra'}>
+  <section class="inner-page section-grid blog-index">
+    <div><p class="eyebrow">{text.blogEyebrow}</p><h1>{text.blogTitle}</h1></div>
+    {posts.length ? <div class="blog-list">
+      {posts.map((post) => <article class="blog-list-card">
+        <p class="eyebrow">{post.data.status === 'draft' ? (isRu ? 'Черновик · предпросмотр' : 'Brouillon · aperçu') : (isRu ? 'Статья' : 'Article')}</p>
+        <h2><a href={`/${locale}/blog/${post.id}/`}>{post.data.title}</a></h2>
+        <p>{post.data.excerpt}</p>
+        {post.data.publishedAt && <time datetime={post.data.publishedAt}>{new Date(`${post.data.publishedAt}T12:00:00Z`).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })}</time>}
+        <a class="text-link" href={`/${locale}/blog/${post.id}/`}>{isRu ? 'Читать статью' : 'Lire l’article'} <span aria-hidden="true">↗</span></a>
+      </article>)}
+    </div> : <div class="empty-state">
+      <span class="empty-state-mark">AM</span><p>{text.blogBody}</p>
+      <a class="button button-outline" href={`/${locale}/`}>{isRu ? 'Вернуться на главную' : 'Retour à l’accueil'} <span aria-hidden="true">↗</span></a>
+    </div>}
+  </section>
+</BaseLayout>

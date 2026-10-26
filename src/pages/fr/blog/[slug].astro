@@ -1,0 +1,10 @@
+---
+import BlogArticle from '@/components/BlogArticle.astro';
+import { getVisibleBlogPosts, type BlogPost } from '@/data/blog';
+export async function getStaticPaths() {
+  return (await getVisibleBlogPosts('fr')).map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+interface Props { entry: BlogPost }
+const { entry } = Astro.props;
+---
+<BlogArticle post={entry} locale="fr" />

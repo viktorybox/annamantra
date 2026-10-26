@@ -34,8 +34,8 @@ const resultImages: Record<ChakraId, string> = {
   manipura: '/images/quiz/manipura.jpg',
   anahata: '/images/quiz/anahata.jpg',
   vishuddha: '/images/quiz/vishuddha.jpg',
-  ajna: '/images/quiz/ajna.jpg',
-  sahasrara: '/images/quiz/sahasrara.jpg',
+  ajna: '/images/quiz/ajna.webp',
+  sahasrara: '/images/quiz/sahasrara.webp',
 };
 
 const russianQuestions: QuizQuestion[] = [
