@@ -26,10 +26,33 @@ const isHome = Astro.url.pathname === `/${locale}/`;
       {text.nav.map((item) => <a href={!isHome && item.href.startsWith('#') ? `/${locale}/${item.href}` : item.href}>{item.label}</a>)}
     </nav>
 
-    <div class="language-switch" aria-label={text.languageSwitchLabel}>
-      <a class:list={{ active: locale === 'ru' }} href={locale === 'ru' ? Astro.url.pathname : otherPath} aria-current={locale === 'ru' ? 'true' : undefined}>RU</a>
-      <span aria-hidden="true">/</span>
-      <a class:list={{ active: locale === 'fr' }} href={locale === 'fr' ? Astro.url.pathname : otherPath} aria-current={locale === 'fr' ? 'true' : undefined}>FR</a>
-    </div>
+    <nav class="language-switch" aria-label={text.languageSwitchLabel} data-current={locale}>
+      <a class:list={{ active: locale === 'ru' }} href={locale === 'ru' ? Astro.url.pathname : otherPath} aria-current={locale === 'ru' ? 'page' : undefined} data-locale="ru" lang="ru" aria-label={locale === 'ru' ? 'Русский, выбран' : 'Passer en russe'}>RU</a>
+      <a class:list={{ active: locale === 'fr' }} href={locale === 'fr' ? Astro.url.pathname : otherPath} aria-current={locale === 'fr' ? 'page' : undefined} data-locale="fr" lang="fr" aria-label={locale === 'fr' ? 'Français, sélectionné' : 'Переключить на французский'}>FR</a>
+    </nav>
   </div>
 </header>
+
+<script>
+  const switcher = document.querySelector<HTMLElement>('.language-switch');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let languageTimer: number | undefined;
+
+  switcher?.addEventListener('click', (event) => {
+    if (!(event instanceof MouseEvent) || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (!(event.target instanceof Element)) return;
+    const link = event.target.closest<HTMLAnchorElement>('a[data-locale]');
+    if (!link) return;
+
+    event.preventDefault();
+    if (languageTimer) window.clearTimeout(languageTimer);
+    if (link.dataset.locale === document.documentElement.lang) {
+      switcher.dataset.current = link.dataset.locale;
+      switcher.querySelectorAll<HTMLAnchorElement>('a[data-locale]').forEach((item) => item.classList.toggle('active', item === link));
+      return;
+    }
+    switcher.dataset.current = link.dataset.locale;
+    switcher.querySelectorAll<HTMLAnchorElement>('a[data-locale]').forEach((item) => item.classList.toggle('active', item === link));
+    languageTimer = window.setTimeout(() => window.location.assign(link.href), reduceMotion.matches ? 0 : 260);
+  });
+</script>

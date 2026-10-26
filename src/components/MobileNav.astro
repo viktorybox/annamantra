@@ -5,26 +5,113 @@ interface Props { locale: Locale }
 const { locale } = Astro.props;
 const items = locale === 'ru'
   ? [
-      { label: 'Главная', icon: '⌂', href: `/${locale}/` },
-      { label: 'Практики', icon: '✦', href: `/${locale}/#practices` },
-      { label: 'Квиз', icon: '◌', href: `/${locale}/quiz/` },
-      { label: 'Блог', icon: '▤', href: `/${locale}/blog/` },
-      { label: 'Ещё', icon: '•••', href: `/${locale}/#about` },
+      { label: 'Главная', icon: 'home', href: '/ru/' },
+      { label: 'Практики', icon: 'practice', href: '/ru/#practices' },
+      { label: 'Квиз', icon: 'quiz', href: '/ru/quiz/' },
+      { label: 'Блог', icon: 'blog', href: '/ru/blog/' },
+      { label: 'Ещё', icon: 'more', href: '/ru/#about' },
     ]
   : [
-      { label: 'Accueil', icon: '⌂', href: `/${locale}/` },
-      { label: 'Pratiques', icon: '✦', href: `/${locale}/#practices` },
-      { label: 'Quiz', icon: '◌', href: `/${locale}/quiz/` },
-      { label: 'Blog', icon: '▤', href: `/${locale}/blog/` },
-      { label: 'Plus', icon: '•••', href: `/${locale}/#about` },
+      { label: 'Accueil', icon: 'home', href: '/fr/' },
+      { label: 'Pratiques', icon: 'practice', href: '/fr/#practices' },
+      { label: 'Quiz', icon: 'quiz', href: '/fr/quiz/' },
+      { label: 'Blog', icon: 'blog', href: '/fr/blog/' },
+      { label: 'Plus', icon: 'more', href: '/fr/#about' },
     ];
+const path = Astro.url.pathname;
+const initialIndex = path.includes('/quiz/') ? 2 : path.includes('/blog/') ? 3 : path === `/${locale}/` ? 0 : 4;
 ---
 
-<nav class="mobile-nav" aria-label={locale === 'ru' ? 'Мобильная навигация' : 'Navigation mobile'}>
-  {items.map((item) => (
-    <a href={item.href} class="mobile-nav-item">
-      <span class="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
-      <span>{item.label}</span>
+<nav class="mobile-nav" aria-label={locale === 'ru' ? 'Мобильная навигация' : 'Navigation mobile'} data-locale={locale}>
+  <span class="mobile-nav-indicator" aria-hidden="true">
+    <svg class="mobile-nav-cradle" viewBox="0 0 100 72" preserveAspectRatio="none"><path d="M0 72V26c12 0 16-5 19-12C25 3 37 0 50 0s25 3 31 14c3 7 7 12 19 12v46Z" /></svg>
+    <span class="mobile-nav-indicator-surface">
+      <span class="mobile-nav-indicator-icon"></span>
+    </span>
+  </span>
+  {items.map((item, index) => (
+    <a href={item.href} class="mobile-nav-item" data-nav-index={index} data-active={index === initialIndex ? 'true' : undefined} aria-current={index === initialIndex ? 'page' : undefined}>
+      <span class="mobile-nav-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          {item.icon === 'home' && <><path d="m3 10 9-7 9 7" /><path d="M5 9v12h14V9M9 21v-7h6v7" /></>}
+          {item.icon === 'practice' && <><path d="M12 3c.8 4.6 2.4 6.2 7 7-4.6.8-6.2 2.4-7 7-.8-4.6-2.4-6.2-7-7 4.6-.8 6.2-2.4 7-7Z" /><path d="M19 17c.3 1.3 1 2 2.3 2.3C20 19.6 19.3 20.3 19 21.6c-.3-1.3-1-2-2.3-2.3C18 19 18.7 18.3 19 17Z" /></>}
+          {item.icon === 'quiz' && <><circle cx="12" cy="12" r="9" /><path d="M9.3 9.1a2.8 2.8 0 0 1 5.4 1c0 1.8-2.7 2-2.7 4" /><circle cx="12" cy="17" r=".7" fill="currentColor" stroke="none" /></>}
+          {item.icon === 'blog' && <><path d="M6 3.5h12a2 2 0 0 1 2 2v15H7a3 3 0 0 1-3-3v-12a2 2 0 0 1 2-2Z" /><path d="M4 17.5a3 3 0 0 1 3-3h13M8 8h8M8 11h6" /></>}
+          {item.icon === 'more' && <><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></>}
+        </svg>
+      </span>
+      <span class="mobile-nav-label">{item.label}</span>
     </a>
   ))}
 </nav>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('.mobile-nav');
+  const links = Array.from(nav?.querySelectorAll<HTMLAnchorElement>('.mobile-nav-item') ?? []);
+  const indicator = nav?.querySelector<HTMLElement>('.mobile-nav-indicator');
+  const surface = nav?.querySelector<HTMLElement>('.mobile-nav-indicator-surface');
+  const indicatorIcon = nav?.querySelector<HTMLElement>('.mobile-nav-indicator-icon');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let activeIndex = 0;
+  let navigationTimer: number | undefined;
+
+  function indexFromLocation() {
+    if (!nav) return 0;
+    const locale = nav.dataset.locale;
+    const path = window.location.pathname;
+    if (path.includes('/quiz/')) return 2;
+    if (path.includes('/blog/')) return 3;
+    if (path === `/${locale}/`) {
+      if (window.location.hash === '#practices') return 1;
+      if (window.location.hash && window.location.hash !== '#home') return 4;
+      return 0;
+    }
+    return 4;
+  }
+
+  function positionIndicator() {
+    const link = links[activeIndex];
+    if (!nav || !indicator || !link || !link.offsetWidth) return;
+    nav.style.setProperty('--nav-indicator-x', `${link.offsetLeft + (link.offsetWidth - indicator.offsetWidth) / 2}px`);
+  }
+
+  function selectItem(index: number, animate = false) {
+    if (!nav || !indicatorIcon || !links[index]) return;
+    activeIndex = index;
+    links.forEach((link, itemIndex) => {
+      const selected = itemIndex === index;
+      link.dataset.active = selected ? 'true' : 'false';
+      if (selected) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    });
+    const icon = links[index].querySelector('svg')?.cloneNode(true);
+    indicatorIcon.replaceChildren(...(icon ? [icon] : []));
+    positionIndicator();
+    if (animate && !reducedMotion.matches && surface) {
+      surface.classList.remove('is-hopping');
+      void surface.offsetWidth;
+      surface.classList.add('is-hopping');
+    }
+  }
+
+  if (nav && indicator) {
+    selectItem(indexFromLocation());
+    nav.dataset.ready = 'true';
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => { nav.dataset.animated = 'true'; }));
+    window.addEventListener('resize', positionIndicator, { passive: true });
+    window.addEventListener('hashchange', () => selectItem(indexFromLocation()));
+    nav.addEventListener('click', (event) => {
+      if (!(event instanceof MouseEvent) || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (!(event.target instanceof Element)) return;
+      const link = event.target.closest<HTMLAnchorElement>('.mobile-nav-item');
+      if (!link || link.target || link.origin !== window.location.origin) return;
+      const index = Number(link.dataset.navIndex);
+      const previousIndex = activeIndex;
+      event.preventDefault();
+      if (navigationTimer) window.clearTimeout(navigationTimer);
+      selectItem(index, index !== previousIndex);
+      if (link.href === window.location.href) return;
+      navigationTimer = window.setTimeout(() => window.location.assign(link.href), reducedMotion.matches || index === previousIndex ? 0 : 400);
+    });
+  }
+</script>
