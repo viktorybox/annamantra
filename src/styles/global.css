@@ -142,7 +142,7 @@ h3 { margin-bottom: 16px; font-size: clamp(1.6rem, 2.6vw, 2.25rem); line-height:
 .about-stamp { position: absolute; z-index: 2; bottom: 11%; left: -5%; display: grid; place-items: center; width: 116px; height: 116px; color: var(--ink); background: var(--white); border: 1px solid var(--sand); border-radius: 50%; font-size: 11px; font-weight: 800; line-height: 1.25; letter-spacing: .08em; text-align: center; text-transform: uppercase; transform: rotate(-9deg); }
 .about-copy { max-width: 650px; }
 
-.quiz-promo { position: relative; display: grid; grid-template-columns: .7fr 1fr; align-items: center; gap: 70px; min-height: 450px; padding: 64px; overflow: hidden; color: var(--white); background: linear-gradient(145deg, #7D44AD, #B160F5); border-radius: 15%; box-shadow: 8px 8px 8px #8749BB, -8px -8px 8px #A75BE7; }
+.quiz-promo { position: relative; display: grid; grid-template-columns: .7fr 1fr; align-items: center; gap: 70px; min-height: 450px; padding: 64px; overflow: hidden; color: var(--white); background: linear-gradient(145deg, #7D44AD, #B160F5); border-radius: 30px; box-shadow: 8px 8px 8px #8749BB, -8px -8px 8px #A75BE7; }
 .quiz-promo-copy { position: relative; z-index: 1; max-width: 600px; }
 .quiz-promo .eyebrow { color: #86e4e5; }
 .quiz-promo h2 { max-width: 700px; }
@@ -272,7 +272,7 @@ h3 { margin-bottom: 16px; font-size: clamp(1.6rem, 2.6vw, 2.25rem); line-height:
   .card-link { right: 30px; bottom: 28px; }
   .about-section { padding-bottom: 100px; }
   .about-photo-wrap { max-width: 360px; }
-  .quiz-promo { gap: 44px; padding: 30px 24px; }
+  .quiz-promo { gap: 44px; padding: 30px 24px; border-radius: 20px; }
   .quiz-promo-shape { width: min(80vw, 260px); }
   .schedule-section { padding-top: 90px; }
   .blog-section { padding-top: 0; }
