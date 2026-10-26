@@ -1,0 +1,32 @@
+---
+import { getCopy, type Locale } from '@/data/site';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const text = getCopy(locale);
+const otherLocale = locale === 'ru' ? 'fr' : 'ru';
+const alternatePathMap: Record<string, string> = {
+  '/ru/privacy/': '/fr/confidentialite/',
+  '/fr/confidentialite/': '/ru/privacy/',
+};
+const otherPath = alternatePathMap[Astro.url.pathname] ?? Astro.url.pathname.replace(`/${locale}/`, `/${otherLocale}/`);
+const isHome = Astro.url.pathname === `/${locale}/`;
+---
+
+<header class="site-header">
+  <div class="header-shell">
+    <a class="brand-slot" href={`/${locale}/`} aria-label={locale === 'ru' ? 'На главную' : 'Accueil'}>
+      <img src="/images/logo.png" alt="Anna Mantra" width="58" height="58" />
+    </a>
+
+    <nav class="desktop-nav" aria-label={locale === 'ru' ? 'Основная навигация' : 'Navigation principale'}>
+      {text.nav.map((item) => <a href={!isHome && item.href.startsWith('#') ? `/${locale}/${item.href}` : item.href}>{item.label}</a>)}
+    </nav>
+
+    <div class="language-switch" aria-label={text.languageSwitchLabel}>
+      <a class:list={{ active: locale === 'ru' }} href={locale === 'ru' ? `/${locale}/` : otherPath}>RU</a>
+      <span aria-hidden="true">/</span>
+      <a class:list={{ active: locale === 'fr' }} href={locale === 'fr' ? `/${locale}/` : otherPath}>FR</a>
+    </div>
+  </div>
+</header>

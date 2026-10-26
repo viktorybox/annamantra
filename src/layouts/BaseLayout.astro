@@ -1,0 +1,43 @@
+---
+import Header from '@/components/Header.astro';
+import MobileNav from '@/components/MobileNav.astro';
+import { getCopy, type Locale } from '@/data/site';
+import '@/styles/global.css';
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+}
+
+const { locale, title, description } = Astro.props;
+const text = getCopy(locale);
+const pageTitle = title ?? (locale === 'ru' ? 'Анна Мантра — вернись к себе' : 'Anna Mantra — reviens à toi');
+const pageDescription = description ?? text.heroBody;
+const alternateLocale = locale === 'ru' ? 'fr' : 'ru';
+const alternatePathMap: Record<string, string> = {
+  '/ru/privacy/': '/fr/confidentialite/',
+  '/fr/confidentialite/': '/ru/privacy/',
+};
+const alternatePath = alternatePathMap[Astro.url.pathname] ?? Astro.url.pathname.replace(`/${locale}/`, `/${alternateLocale}/`);
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content={pageDescription} />
+    <meta name="theme-color" content="#0d4779" />
+    <link rel="alternate" hreflang={alternateLocale} href={alternatePath} />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">{locale === 'ru' ? 'К содержанию' : 'Aller au contenu'}</a>
+    <Header locale={locale} />
+    <main id="main-content">
+      <slot />
+    </main>
+    <MobileNav locale={locale} />
+  </body>
+</html>

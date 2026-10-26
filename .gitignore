@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+!.env.example
+*.log
+
+# Source material is kept outside the deployable project assets.
+inbox/

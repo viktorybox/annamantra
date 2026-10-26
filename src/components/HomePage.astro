@@ -1,0 +1,122 @@
+---
+import { getCopy, type Locale } from '@/data/site';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const text = getCopy(locale);
+const isRu = locale === 'ru';
+---
+
+<section class="hero-section section-grid" aria-labelledby="hero-title">
+  <div class="hero-copy reveal-up">
+    <p class="eyebrow">{text.heroEyebrow}</p>
+    <h1 id="hero-title">{text.heroTitle}<br /><em>{text.heroAccent}</em></h1>
+    <p class="hero-body">{text.heroBody}</p>
+    <div class="hero-actions">
+      <a class="button button-primary" href="#practices">
+        {text.heroPrimary}
+        <span aria-hidden="true">→</span>
+      </a>
+      <a class="text-link" href="#about">{text.heroSecondary}<span aria-hidden="true">↓</span></a>
+    </div>
+  </div>
+
+  <div class="hero-visual reveal-up" aria-label={isRu ? 'Фотография Анны' : 'Portrait d’Anna'}>
+    <div class="hero-orbit hero-orbit-one"></div>
+    <div class="hero-orbit hero-orbit-two"></div>
+    <div class="hero-image-wrap">
+      <img src="/images/hero-anna.jpg" alt={isRu ? 'Анна в медитативной позе' : 'Anna dans une posture méditative'} width="720" height="1200" fetchpriority="high" />
+      <div class="hero-image-caption"><span>AM</span><span>{isRu ? 'практика внутреннего танца' : 'pratique de la danse intérieure'}</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="soft-intro section-grid" id="practices" aria-labelledby="practices-title">
+  <div>
+    <p class="eyebrow">{text.practicesEyebrow}</p>
+    <h2 id="practices-title">{text.practicesTitle}</h2>
+  </div>
+  <p class="section-lead">{text.practicesBody}</p>
+</section>
+
+<section class="practice-grid section-grid" aria-label={isRu ? 'Форматы практик' : 'Formats de pratique'}>
+  <article class="practice-card practice-card-aqua">
+    <span class="card-index">01</span>
+    <div class="card-icon" aria-hidden="true">✦</div>
+    <h3>{text.practiceGroupTitle}</h3>
+    <p>{text.practiceGroupBody}</p>
+    <a class="card-link" href="#telegram-channel">{text.practiceGroupCta}<span aria-hidden="true">↗</span></a>
+  </article>
+  <article class="practice-card practice-card-lilac">
+    <span class="card-index">02</span>
+    <div class="card-icon" aria-hidden="true">◌</div>
+    <h3>{text.practiceIndividualTitle}</h3>
+    <p>{text.practiceIndividualBody}</p>
+    <a class="card-link" href="#schedule">{text.practiceIndividualCta}<span aria-hidden="true">↗</span></a>
+  </article>
+</section>
+
+<section class="about-section section-grid" id="about" aria-labelledby="about-title">
+  <div class="about-photo-wrap">
+    <div class="about-photo-glow"></div>
+    <img src="/images/hero-anna.jpg" alt={isRu ? 'Анна Мантра' : 'Anna Mantra'} loading="lazy" width="720" height="1200" />
+    <div class="about-stamp" aria-hidden="true">внутренний<br />контакт</div>
+  </div>
+  <div class="about-copy">
+    <p class="eyebrow">{text.aboutEyebrow}</p>
+    <h2 id="about-title">{text.aboutTitle}</h2>
+    <p class="section-lead">{text.aboutBody}</p>
+    <a class="text-link" href="#channel">{text.aboutLink}<span aria-hidden="true">→</span></a>
+  </div>
+</section>
+
+<section class="quiz-promo section-grid" aria-labelledby="quiz-promo-title">
+  <div class="quiz-promo-shape" aria-hidden="true">
+    <span class="chakra-dot chakra-red"></span><span class="chakra-dot chakra-orange"></span><span class="chakra-dot chakra-yellow"></span>
+    <span class="chakra-dot chakra-green"></span><span class="chakra-dot chakra-blue"></span><span class="chakra-dot chakra-indigo"></span><span class="chakra-dot chakra-purple"></span>
+  </div>
+  <div class="quiz-promo-copy">
+    <p class="eyebrow">{text.quizEyebrow}</p>
+    <h2 id="quiz-promo-title">{text.quizTitle}</h2>
+    <p class="section-lead">{text.quizBody}</p>
+    <a class="button button-outline" href={`/${locale}/quiz/`}>{text.quizCta}<span aria-hidden="true">↗</span></a>
+  </div>
+</section>
+
+<section class="schedule-section section-grid" id="schedule" aria-labelledby="schedule-title">
+  <div>
+    <p class="eyebrow">{text.scheduleEyebrow}</p>
+    <h2 id="schedule-title">{text.scheduleTitle}</h2>
+  </div>
+  <div class="schedule-placeholder">
+    <div class="schedule-line"><span class="schedule-dot"></span><span>01</span><span class="schedule-rule"></span><span>{isRu ? 'Расписание появится здесь' : 'L’agenda apparaîtra ici'}</span></div>
+    <p>{text.scheduleBody}</p>
+    <a class="text-link" href="#telegram-channel">{text.scheduleCta}<span aria-hidden="true">→</span></a>
+  </div>
+</section>
+
+<section class="blog-section section-grid" aria-labelledby="blog-title">
+  <div>
+    <p class="eyebrow">{text.blogEyebrow}</p>
+    <h2 id="blog-title">{text.blogTitle}</h2>
+  </div>
+  <div class="blog-card">
+    <span class="blog-card-mark" aria-hidden="true">AM</span>
+    <p>{text.blogBody}</p>
+    <a class="text-link" href={`/${locale}/blog/`}>{text.blogCta}<span aria-hidden="true">↗</span></a>
+  </div>
+</section>
+
+<section class="channel-section" id="channel" aria-labelledby="channel-title">
+  <div class="channel-inner" id="telegram-channel">
+    <p class="eyebrow">{text.channelEyebrow}</p>
+    <h2 id="channel-title">{text.channelTitle}</h2>
+    <p>{text.channelBody}</p>
+    <a class="button button-light" href="#telegram-channel">{text.channelCta}<span aria-hidden="true">→</span></a>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-brand"><span class="footer-logo-slot"><img src="/images/logo.png" alt="Anna Mantra" width="38" height="38" /></span><span>{text.footer}</span></div>
+  <div class="footer-meta"><span>© {new Date().getFullYear()} Anna Mantra</span><a href={`/${locale}/privacy/`}>{text.privacy}</a></div>
+</footer>

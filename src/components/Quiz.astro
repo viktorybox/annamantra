@@ -1,0 +1,163 @@
+---
+import { getQuizData, type QuizLocale } from '@/data/quiz';
+
+interface Props { locale: QuizLocale }
+const { locale } = Astro.props;
+const data = getQuizData(locale);
+const serialized = JSON.stringify(data).replace(/</g, '\\u003c');
+---
+
+<section class="quiz-page" data-quiz-root data-locale={locale}>
+  <div class="quiz-shell">
+    <div class="quiz-intro">
+      <a class="back-home" href={`/${locale}/`}><span aria-hidden="true">←</span> {locale === 'ru' ? 'На главную' : 'Accueil'}</a>
+      <p class="eyebrow">{data.copy.eyebrow}</p>
+      <h1>{data.copy.title}</h1>
+      <p class="quiz-intro-copy">{data.copy.intro}</p>
+      <div class="quiz-intro-line"><span></span><small>01 — 07</small></div>
+    </div>
+
+    <div class="quiz-panel" data-quiz-panel>
+      <div class="quiz-progress-row">
+        <span data-progress-label>1 / 7</span>
+        <div class="quiz-progress" aria-hidden="true"><span data-progress-bar></span></div>
+      </div>
+      <p class="quiz-storage-note">{data.copy.storageNotice}</p>
+      <div data-question-region></div>
+      <div class="quiz-controls">
+        <button class="button button-ghost" type="button" data-back disabled>{data.copy.back}</button>
+        <button class="button button-primary" type="button" data-next disabled>{data.copy.next}<span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+  </div>
+
+  <dialog class="result-dialog" data-result-dialog aria-labelledby="result-title">
+    <div class="result-dialog-inner">
+      <button class="dialog-close" type="button" data-close-result aria-label={locale === 'ru' ? 'Закрыть результат' : 'Fermer le résultat'}>×</button>
+      <div class="result-image-wrap"><img data-result-image src="" alt="" width="600" height="600" /></div>
+      <div class="result-copy">
+        <p class="eyebrow" data-result-eyebrow>{data.copy.resultEyebrow}</p>
+        <p class="result-label" data-result-label></p>
+        <h2 id="result-title" data-result-title></h2>
+        <p class="result-statement" data-result-statement></p>
+        <div class="result-practice"><span>{locale === 'ru' ? 'Мягкая практика' : 'Pratique douce'}</span><p data-result-practice></p></div>
+        <p class="result-disclaimer">{data.copy.disclaimer}</p>
+        <div class="result-actions">
+          <a class="button button-primary" href={`/${locale}/#telegram-channel`}>{data.copy.channel}<span aria-hidden="true">→</span></a>
+          <button class="button button-ghost" type="button" data-restart>{data.copy.restart}</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</section>
+
+<script is:inline define:vars={{ serialized }}>
+  const root = document.querySelector('[data-quiz-root]');
+  if (root) {
+    const data = JSON.parse(serialized);
+    const locale = root.getAttribute('data-locale') || 'ru';
+    const storageKey = `anna-mantra-quiz-${locale}`;
+    const questionRegion = root.querySelector('[data-question-region]');
+    const progressLabel = root.querySelector('[data-progress-label]');
+    const progressBar = root.querySelector('[data-progress-bar]');
+    const nextButton = root.querySelector('[data-next]');
+    const backButton = root.querySelector('[data-back]');
+    const dialog = root.querySelector('[data-result-dialog]');
+    const resultImage = root.querySelector('[data-result-image]');
+    const resultLabel = root.querySelector('[data-result-label]');
+    const resultTitle = root.querySelector('[data-result-title]');
+    const resultStatement = root.querySelector('[data-result-statement]');
+    const resultPractice = root.querySelector('[data-result-practice]');
+    let state = { index: 0, answers: [] };
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (saved && Array.isArray(saved.answers)) state = { index: Math.min(saved.index || 0, data.questions.length - 1), answers: saved.answers };
+    } catch { /* localStorage may be unavailable in private browsing */ }
+
+    const saveState = () => {
+      try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch { /* keep quiz usable */ }
+    };
+
+    const render = () => {
+      const question = data.questions[state.index];
+      const selected = state.answers[state.index];
+      if (!questionRegion || !question) return;
+      questionRegion.innerHTML = `
+        <div class="quiz-question" aria-live="polite">
+          <span class="quiz-question-number">${String(state.index + 1).padStart(2, '0')}</span>
+          <h2>${question.question}</h2>
+          <div class="quiz-options" role="radiogroup" aria-label="${question.question}">
+            ${question.options.map((option, optionIndex) => `
+              <button class="quiz-option${selected === optionIndex ? ' selected' : ''}" type="button" role="radio" aria-checked="${selected === optionIndex}" data-option-index="${optionIndex}">
+                <span class="quiz-option-marker"></span><span>${option.text}</span>
+              </button>`).join('')}
+          </div>
+        </div>`;
+      questionRegion.querySelectorAll('[data-option-index]').forEach((button) => {
+        button.addEventListener('click', () => {
+          state.answers[state.index] = Number(button.getAttribute('data-option-index'));
+          saveState();
+          render();
+        });
+      });
+      if (progressLabel) progressLabel.textContent = `${state.index + 1} / ${data.questions.length}`;
+      if (progressBar) progressBar.style.width = `${((state.index + 1) / data.questions.length) * 100}%`;
+      if (backButton) backButton.disabled = state.index === 0;
+      if (nextButton) {
+        nextButton.disabled = state.answers[state.index] === undefined;
+        nextButton.innerHTML = state.index === data.questions.length - 1 ? `${data.copy.finish}<span aria-hidden="true">→</span>` : `${data.copy.next}<span aria-hidden="true">→</span>`;
+      }
+    };
+
+    const getWinner = () => {
+      const scores = {};
+      data.questions.forEach((question, index) => {
+        const answerIndex = state.answers[index];
+        if (answerIndex === undefined) return;
+        const chakra = question.options[answerIndex].chakra;
+        scores[chakra] = (scores[chakra] || 0) + 1;
+      });
+      const max = Math.max(...Object.values(scores));
+      const leaders = new Set(Object.keys(scores).filter((chakra) => scores[chakra] === max));
+      for (let index = state.answers.length - 1; index >= 0; index -= 1) {
+        const answerIndex = state.answers[index];
+        if (answerIndex === undefined) continue;
+        const chakra = data.questions[index].options[answerIndex].chakra;
+        if (leaders.has(chakra)) return chakra;
+      }
+      return 'muladhara';
+    };
+
+    const showResult = () => {
+      const result = data.results[getWinner()];
+      if (!result) return;
+      resultImage.src = result.image;
+      resultImage.alt = result.name;
+      resultLabel.textContent = result.label;
+      resultTitle.textContent = result.name;
+      resultStatement.textContent = result.statement;
+      resultPractice.textContent = result.practice;
+      if (dialog && typeof dialog.showModal === 'function') dialog.showModal();
+      else dialog?.setAttribute('open', '');
+    };
+
+    nextButton?.addEventListener('click', () => {
+      if (state.answers[state.index] === undefined) return;
+      if (state.index === data.questions.length - 1) showResult();
+      else { state.index += 1; saveState(); render(); }
+    });
+    backButton?.addEventListener('click', () => {
+      if (state.index > 0) { state.index -= 1; saveState(); render(); }
+    });
+    root.querySelector('[data-close-result]')?.addEventListener('click', () => dialog?.close());
+    root.querySelector('[data-restart]')?.addEventListener('click', () => {
+      state = { index: 0, answers: [] };
+      try { localStorage.removeItem(storageKey); } catch { /* keep quiz usable */ }
+      dialog?.close();
+      render();
+    });
+    dialog?.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
+    render();
+  }
+</script>

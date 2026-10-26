@@ -1,0 +1,19 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getCopy } from '@/data/site';
+const text = getCopy('ru');
+---
+
+<BaseLayout locale="ru" title="Блог — Анна Мантра">
+  <section class="inner-page section-grid">
+    <div>
+      <p class="eyebrow">{text.blogEyebrow}</p>
+      <h1>{text.blogTitle}</h1>
+    </div>
+    <div class="empty-state">
+      <span class="empty-state-mark">AM</span>
+      <p>{text.blogBody}</p>
+      <a class="button button-outline" href="/ru/">Вернуться на главную <span aria-hidden="true">↗</span></a>
+    </div>
+  </section>
+</BaseLayout>

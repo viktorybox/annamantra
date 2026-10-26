@@ -1,0 +1,30 @@
+---
+import { type Locale } from '@/data/site';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const items = locale === 'ru'
+  ? [
+      { label: 'Главная', icon: '⌂', href: `/${locale}/` },
+      { label: 'Практики', icon: '✦', href: `/${locale}/#practices` },
+      { label: 'Квиз', icon: '◌', href: `/${locale}/quiz/` },
+      { label: 'Блог', icon: '▤', href: `/${locale}/blog/` },
+      { label: 'Ещё', icon: '•••', href: `/${locale}/#about` },
+    ]
+  : [
+      { label: 'Accueil', icon: '⌂', href: `/${locale}/` },
+      { label: 'Pratiques', icon: '✦', href: `/${locale}/#practices` },
+      { label: 'Quiz', icon: '◌', href: `/${locale}/quiz/` },
+      { label: 'Blog', icon: '▤', href: `/${locale}/blog/` },
+      { label: 'Plus', icon: '•••', href: `/${locale}/#about` },
+    ];
+---
+
+<nav class="mobile-nav" aria-label={locale === 'ru' ? 'Мобильная навигация' : 'Navigation mobile'}>
+  {items.map((item) => (
+    <a href={item.href} class="mobile-nav-item">
+      <span class="mobile-nav-icon" aria-hidden="true">{item.icon}</span>
+      <span>{item.label}</span>
+    </a>
+  ))}
+</nav>
