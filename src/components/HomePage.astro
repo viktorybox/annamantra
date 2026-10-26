@@ -1,10 +1,13 @@
 ---
 import { getCopy, type Locale } from '@/data/site';
+import { getVisibleBlogPosts } from '@/data/blog';
 
 interface Props { locale: Locale }
 const { locale } = Astro.props;
 const text = getCopy(locale);
 const isRu = locale === 'ru';
+const blogEntries = await getVisibleBlogPosts(locale);
+const featuredPost = blogEntries[0];
 ---
 
 <section class="hero-section section-grid" aria-labelledby="hero-title">
@@ -102,8 +105,19 @@ const isRu = locale === 'ru';
   </div>
   <div class="blog-card">
     <span class="blog-card-mark" aria-hidden="true">AM</span>
-    <p>{text.blogBody}</p>
-    <a class="text-link" href={`/${locale}/blog/`}>{text.blogCta}<span aria-hidden="true">↗</span></a>
+    {featuredPost ? (
+      <>
+        {featuredPost.data.status === 'draft' && <span class="blog-draft-label">Черновик · предпросмотр</span>}
+        <h3>{featuredPost.data.title}</h3>
+        <p>{featuredPost.data.excerpt}</p>
+        <a class="text-link" href={`/${locale}/blog/${featuredPost.id}/`}>{isRu ? 'Читать статью' : 'Lire l’article'}<span aria-hidden="true">↗</span></a>
+      </>
+    ) : (
+      <>
+        <p>{text.blogBody}</p>
+        <a class="text-link" href={`/${locale}/blog/`}>{text.blogCta}<span aria-hidden="true">↗</span></a>
+      </>
+    )}
   </div>
 </section>
 

@@ -1,0 +1,35 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { render, type CollectionEntry } from 'astro:content';
+import { getVisibleBlogPosts } from '@/data/blog';
+
+export async function getStaticPaths() {
+  const entries = await getVisibleBlogPosts('ru');
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props { entry: CollectionEntry<'blog'> }
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<BaseLayout
+  locale="ru"
+  title={entry.data.seoTitle}
+  description={entry.data.description}
+  noindex={entry.data.status === 'draft'}
+  alternateHref={null}
+  languageSwitchHref="/fr/blog/"
+>
+  <article class="article-page">
+    <header class="article-header">
+      <a class="back-home" href="/ru/blog/"><span aria-hidden="true">←</span> Все статьи</a>
+      <p class="eyebrow">{entry.data.status === 'draft' ? 'Черновик · предпросмотр' : 'Блог Анны'}</p>
+      <h1>{entry.data.title}</h1>
+      <p class="article-excerpt">{entry.data.excerpt}</p>
+      {entry.data.publishedAt && <time datetime={entry.data.publishedAt}>{new Date(`${entry.data.publishedAt}T12:00:00Z`).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</time>}
+    </header>
+    <div class="article-body"><Content /></div>
+    <footer class="article-footer"><a class="text-link" href="/ru/blog/">Вернуться к блогу <span aria-hidden="true">→</span></a></footer>
+  </article>
+</BaseLayout>

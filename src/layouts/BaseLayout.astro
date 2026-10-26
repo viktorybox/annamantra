@@ -8,9 +8,12 @@ interface Props {
   locale: Locale;
   title?: string;
   description?: string;
+  noindex?: boolean;
+  alternateHref?: string | null;
+  languageSwitchHref?: string;
 }
 
-const { locale, title, description } = Astro.props;
+const { locale, title, description, noindex = false, alternateHref, languageSwitchHref } = Astro.props;
 const text = getCopy(locale);
 const pageTitle = title ?? (locale === 'ru' ? 'Анна Мантра — вернись к себе' : 'Anna Mantra — reviens à toi');
 const pageDescription = description ?? text.heroBody;
@@ -19,7 +22,9 @@ const alternatePathMap: Record<string, string> = {
   '/ru/privacy/': '/fr/confidentialite/',
   '/fr/confidentialite/': '/ru/privacy/',
 };
-const alternatePath = alternatePathMap[Astro.url.pathname] ?? Astro.url.pathname.replace(`/${locale}/`, `/${alternateLocale}/`);
+const alternatePath = alternateHref === undefined
+  ? (alternatePathMap[Astro.url.pathname] ?? Astro.url.pathname.replace(`/${locale}/`, `/${alternateLocale}/`))
+  : alternateHref;
 ---
 
 <!doctype html>
@@ -29,12 +34,13 @@ const alternatePath = alternatePathMap[Astro.url.pathname] ?? Astro.url.pathname
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content={pageDescription} />
     <meta name="theme-color" content="#0d4779" />
-    <link rel="alternate" hreflang={alternateLocale} href={alternatePath} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {alternatePath && <link rel="alternate" hreflang={alternateLocale} href={alternatePath} />}
     <title>{pageTitle}</title>
   </head>
   <body>
     <a class="skip-link" href="#main-content">{locale === 'ru' ? 'К содержанию' : 'Aller au contenu'}</a>
-    <Header locale={locale} />
+    <Header locale={locale} languageSwitchHref={languageSwitchHref} />
     <main id="main-content">
       <slot />
     </main>
